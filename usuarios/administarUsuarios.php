@@ -215,37 +215,40 @@ $result= $conexion->query($sql_listar);
             <a href="registrar.php" class="btn btn-primary">➕ Crear nuevo usuario</a>
         </div>
 
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Usuario</th>
-                    <th>Rol</th>
-                    <th style="width: 160px;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $result->fetch_assoc()) { ?>
-                <tr>
-                    <td><?= $row['id_usuario']; ?></td>
-                    <td><?= $row['nombre']; ?></td>
-                    <td><?= $row['usuario']; ?></td>
-                    <td><?= $row['rol']; ?></td>
-                    <td>
-                        <a href="editar_usuario.php?id=<?= $row['id_usuario']; ?>" class="btn btn-warning btn-sm">
-                            ✏ Editar
-                        </a>
-                        <a href="acciones_usuarios/eliminar_usuario.php?id=<?= $row['id_usuario']; ?>"
-                            class="btn btn-danger btn-sm"
-                            onclick="return confirm('¿Seguro que deseas eliminar este usuario?');">
-                            🗑 Eliminar
-                        </a>
-                    </td>
-                </tr>
-                <?php } ?>
-            </tbody>
-        </table>
+       <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark sticky-top">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th style="width: 160px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $result->fetch_assoc()) { ?>
+            <tr>
+                <td><?= $row['id_usuario']; ?></td>
+                <td><?= $row['nombre']; ?></td>
+                <td><?= $row['usuario']; ?></td>
+                <td><?= $row['rol']; ?></td>
+                <td>
+                    <a href="editar_usuario.php?id=<?= $row['id_usuario']; ?>" class="btn btn-warning btn-sm">
+                        ✏ Editar
+                    </a>
+                    <a href="acciones_usuarios/eliminar_usuario.php?id=<?= $row['id_usuario']; ?>"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('¿Seguro que deseas eliminar este usuario?');">
+                        🗑 Eliminar
+                    </a>
+                </td>
+            </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+
 
     </div>
     <!-- Modal de Éxito (oculto por defecto) -->

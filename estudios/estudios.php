@@ -114,7 +114,7 @@ $res = $conexion->query($sql);
                             </li>
 
                             <li class="nav-item">
-                                <a href="/lab/pacientes/pacientes.php" class="nav-link text-white active hoverbutton">
+                                <a href="/lab/pacientes/pacientes.php" class="nav-link text-white  hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white"
                                         viewBox="0 0 16 16">
                                         <path d="M3 1h5l2 2h3v12H3z" />
@@ -125,7 +125,7 @@ $res = $conexion->query($sql);
                             </li>
 
                             <li class="nav-item">
-                                <a href="/lab/estudios/estudios.php" class="nav-link text-white hoverbutton">
+                                <a href="/lab/estudios/estudios.php" class="nav-link text-white active hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
                                         stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                         class="me-2">
@@ -236,7 +236,8 @@ $res = $conexion->query($sql);
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>🧾 Órdenes / Estudios trabajados</h3>
-    <a class="btn btn-success" href="orden_nueva.php">➕ Nueva Orden</a>
+    <a class="btn btn-success" href="orden_nueva.php">➕ Nueva Orden</a> 
+    <a class="btn btn-success" href="/lab/estudios/listaEstudios.php"> Catalogo de Estudios</a>
   </div>
 
   <!-- FILTROS (no se modificó nada) -->
@@ -246,8 +247,7 @@ $res = $conexion->query($sql);
       <select name="estado" class="form-select">
         <option value="">-- Estado --</option>
         <option value="pendiente" <?= $estado=='pendiente'?'selected':'' ?>>pendiente</option>
-        <option value="pagada" <?= $estado=='pagada'?'selected':'' ?>>pagada</option>
-        <option value="en_proceso" <?= $estado=='en_proceso'?'selected':'' ?>>en_proceso</option>
+               <option value="en_proceso" <?= $estado=='en_proceso'?'selected':'' ?>>en_proceso</option>
         <option value="completa" <?= $estado=='completa'?'selected':'' ?>>completa</option>
       </select>
     </div>

@@ -1,0 +1,16 @@
+.table-container {
+    max-height: 480px;
+    overflow-y: auto;
+}
+th, td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+/* Permitir salto de línea solo en la descripción */
+.col-desc {
+    max-width: 220px;
+    white-space: normal !important;   /* 👉 permite salto de línea */
+    overflow-wrap: break-word;        /* 👉 rompe palabras largas */
+    word-wrap: break-word;
+    overflow: hidden;                 /* 👉 mantiene alto ordenado */
+}

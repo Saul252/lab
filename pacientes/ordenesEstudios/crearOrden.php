@@ -25,7 +25,7 @@ $paciente = $res->fetch_assoc();
 $stmt->close();
 
 // Obtener catálogo de estudios
-$estudios_q = $conexion->query("SELECT id_estudio, codigo, nombre, precio, tipo_resultado FROM estudios ORDER BY nombre ASC");
+$estudios_q = $conexion->query("SELECT id_estudio, codigo, nombre, precio, tipo_resultado, descripcion FROM estudios ORDER BY nombre ASC");
 $estudios = $estudios_q->fetch_all(MYSQLI_ASSOC);
 ?>
 <!doctype html>
@@ -265,7 +265,7 @@ $estudios = $estudios_q->fetch_all(MYSQLI_ASSOC);
 
           <div class="d-grid gap-2 mt-3">
             <button id="btnCrear" class="btn btn-primary" form="formOrden">Crear Orden</button>
-            <a href="../pacientes/pacientes.php" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="/lab/pacientes/pacientes.php" class="btn btn-outline-secondary">Cancelar</a>
           </div>
         </div>
       </div>
@@ -315,11 +315,12 @@ $estudios = $estudios_q->fetch_all(MYSQLI_ASSOC);
               <table class="table table-striped table-hover mb-0">
                 <thead class="table-light sticky-top">
                   <tr>
-                    <th style="width:48px"></th>
+                    <th class="text-center">Seleccion</th>
                     <th>Código</th>
                     <th>Estudio</th>
-                    <th class="text-end">Precio</th>
-                    <th class="text-center">Tipo</th>
+                    <th >Precio</th>
+                    <th>Tipo</th>
+                    <th style="width:220px">Descripcion</th>
                   </tr>
                 </thead>
                 <tbody id="tablaEstudios">
@@ -330,8 +331,10 @@ $estudios = $estudios_q->fetch_all(MYSQLI_ASSOC);
                       </td>
                       <td class="align-middle"><?= htmlspecialchars($e['codigo']) ?></td>
                       <td class="align-middle"><?= htmlspecialchars($e['nombre']) ?></td>
-                      <td class="align-middle text-end">$<?= number_format($e['precio'],2) ?></td>
-                      <td class="align-middle text-center"><?= htmlspecialchars($e['tipo_resultado']) ?></td>
+                      <td class="align-middle ">$<?= number_format($e['precio'],2) ?></td>
+                      <td class="align-middle"><?= htmlspecialchars($e['tipo_resultado']) ?></td>
+                      <td class="align-middle"><?= htmlspecialchars($e['descripcion']) ?></td>
+                    </tr>
                     </tr>
                   <?php endforeach; ?>
                 </tbody>
