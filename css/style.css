@@ -1,0 +1,68 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+/* Sidebar derecho */
+#sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    right: 0;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    
+}
+
+/* Sidebar oculto */
+#sidebar.hidden {
+    transform: translateX(100%);
+}
+
+/* Botón flotante para abrir/cerrar */
+.toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 260px;
+    z-index: 1100;
+    transition: right 0.3s ease;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+}
+
+/* Cuando el sidebar está oculto, mover el botón */
+#sidebar.hidden + .toggle-btn {
+    right: 20px;
+}
+
+/* Asegura que el <a> permita ver el fondo */
+.hoverbutton {
+    display: block !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    transition: 0.3s !important;
+}
+
+/* Hover con importante */
+.hoverbutton:hover {
+    background-color: #4c5157 !important; /* gris elegante */
+    color: #ffffff !important;
+    transform: translateX(5px) !important;
+    text-decoration: none !important;
+}
+

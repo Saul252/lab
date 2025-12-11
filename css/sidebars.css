@@ -1,0 +1,11 @@
+
+.hoverbutton {
+    transition: 0.3s !important;
+}
+
+.hoverbutton:hover {
+    background-color: #4c5157 !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
+
