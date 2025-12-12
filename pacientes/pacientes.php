@@ -240,7 +240,8 @@ $resultado = $conexion->query($sql);
         </form>
 
         <!-- TABLA -->
-        <div class="table-responsive">
+       <div class="table-responsive scroll-tabla">
+
             <table class="table table-bordered table-hover bg-white">
                 <thead class="table-dark">
                     <tr>
@@ -261,7 +262,12 @@ $resultado = $conexion->query($sql);
                     <?php while ($row = $resultado->fetch_assoc()): ?>
                     <tr>
                         <td><?= $row['id_paciente'] ?></td>
-                        <td><?= $row['nombre'] ?></td>
+                        <td>
+        <a href="perfilPaciente.php?id=<?= $row['id_paciente'] ?>" 
+           class="text-primary fw-semibold text-decoration-none">
+            <?= htmlspecialchars($row['nombre']) ?>
+        </a>
+    </td>
                         <td><?= $row['edad'] ?></td>
                         <td><?= $row['sexo'] ?></td>
                         <td><?= $row['telefono'] ?></td>

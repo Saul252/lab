@@ -1,95 +1,133 @@
 <?php
 session_start();
-require "../conexion.php";
 
-if (!isset($_SESSION['usuario'])) {
+if (!isset($_SESSION["usuario"])) {
     header("Location: login.php");
-    exit;
+    exit();
 }
 
-// filtros
-$filtro = $conexion->real_escape_string($_GET['filtro'] ?? '');
-$estado = $conexion->real_escape_string($_GET['estado'] ?? '');
-$desde = $_GET['desde'] ?? '';
-$hasta = $_GET['hasta'] ?? '';
+require "../conexion.php"; // AJUSTA LA RUTA
 
-// construir WHERE
-$where = "1=1";
-if ($filtro !== '') {
-    $where .= " AND (o.folio LIKE '%$filtro%' OR p.nombre LIKE '%$filtro%')";
-}
-if ($estado !== '') {
-    $estado_safe = $conexion->real_escape_string($estado);
-    $where .= " AND o.estado = '$estado_safe'";
-}
-if ($desde !== '') {
-    $desde_safe = $conexion->real_escape_string($desde);
-    $where .= " AND DATE(o.fecha_creacion) >= '$desde_safe'";
-}
-if ($hasta !== '') {
-    $hasta_safe = $conexion->real_escape_string($hasta);
-    $where .= " AND DATE(o.fecha_creacion) <= '$hasta_safe'";
-}
+// ====================== CONTADORES ======================
 
-// consulta
-$sql = "SELECT 
-            o.*, 
-            p.nombre AS paciente,
-            c.fecha_cita,
-            c.hora_cita
-        FROM ordenes o
-        JOIN pacientes p ON o.id_paciente = p.id_paciente
-        LEFT JOIN citas c ON c.id_cita = o.id_cita
-        WHERE $where
-        ORDER BY o.fecha_creacion DESC
-        LIMIT 500";
-$res = $conexion->query($sql)
+// Usuarios
+$usuarios_total = $conexion->query("SELECT COUNT(*) AS total FROM usuarios")->fetch_assoc()["total"];
+
+// Pacientes
+$pacientes_total = $conexion->query("SELECT COUNT(*) AS total FROM pacientes")->fetch_assoc()["total"];
+
+// Ordenes por estado
+$ordenes = $conexion->query("
+    SELECT 
+        SUM(estado='pendiente') AS pendientes,
+        SUM(estado='en_proceso') AS en_proceso,
+        SUM(estado='completa') AS completas,
+        SUM(estado='pagada') AS pagadas
+    FROM ordenes
+")->fetch_assoc();
+
+// Citas del día
+$hoy = date("Y-m-d");
+$citas_hoy = $conexion->query("
+    SELECT COUNT(*) AS total 
+    FROM citas 
+    WHERE fecha_cita = '$hoy'
+")->fetch_assoc()["total"];
+
+// Inventario
+$insumos_total = $conexion->query("SELECT COUNT(*) AS total FROM reactivos")->fetch_assoc()["total"];
+$insumos_en_cero = $conexion->query("SELECT COUNT(*) AS total FROM reactivos WHERE stock_actual = 0")->fetch_assoc()["total"];
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
-    <title>Lista de ordenes de estudios</title>
+    <title>Dashboard | Laboratorio</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/lab/css/style.css">
-    <link rel="stylesheet" href="/lab/css/sidebar.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+     <link rel="stylesheet" href="/lab/css/sidebar.css">
+ <link rel="stylesheet" href="/lab/css/style.css">
+
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <style>
+        body {
+            background: #f4f5f7;
+        }
+        .card-custom {
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            transition: .2s;
+        }
+        .card-custom:hover {
+            transform: translateY(-3px);
+        }
+        .chart-card {
+            padding: 20px;
+        }
+    </style>
 </head>
 
-<body class="bg-light">
+<body>
+  <!-- NAVBAR -->
     <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid">
+
             <button class="btn btn-dark d-flex align-items-center gap-2" type="button" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
 
-                <i class="bi bi-list" style="font-size: 1.2rem;"></i> <svg xmlns="http://www.w3.org/2000/svg" width="28"
-                    height="28" fill="white" class="bi bi-list" viewBox="0 0 16 16">
+
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" class="bi bi-list"
+                    viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
                         d="M2.5 12.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0-4a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0-4a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z" />
                 </svg>
-                Menu
 
+                Menu
             </button>
 
             <div class="offcanvas offcanvas-start bg-dark" data-bs-scroll="true" tabindex="-1"
                 id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
+
                 <div class="offcanvas-header">
                     <h5 class="offcanvas-title text-white bg-dark" id="offcanvasWithBothOptionsLabel">Menu</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
-                        aria-label="Close"></button>
-
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
                 </div>
+
                 <div class="offcanvas-body">
+
                     <?php if ($_SESSION["rol"] == "admin") { ?>
 
                     <div class="d-flex flex-column p-3 text-white bg-dark" style="height: 90vh; width: 100%;">
-
-                        <!-- Título o logo -->
 
                         <ul class="nav nav-pills flex-column mb-auto">
 
                             <li class="nav-item">
                                 <a href="/lab/bienvenida.php" class="nav-link text-white  hoverbutton">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M3 9l9-6 9 6"></path>
+                                        <path d="M9 22V12h6v10"></path>
+                                        <path d="M3 9v12h18V9"></path>
+                                    </svg>
+
+                                    Inicio
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/lab/dashboard/dashboard.php" class="nav-link text-white active hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
                                         stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                         class="me-2">
@@ -98,13 +136,12 @@ $res = $conexion->query($sql)
                                         <rect x="2" y="10" width="6" height="4" rx="1"></rect>
                                         <rect x="10" y="12" width="4" height="3" rx="1"></rect>
                                     </svg>
-
                                     Dashboard
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a href="/lab/usuarios/administarUsuarios.php" class="nav-link text-white  hoverbutton">
+                                <a href="/lab/usuarios/administarUsuarios.php" class="nav-link text-white hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white"
                                         class="bi bi-people-fill" viewBox="0 0 16 16">
                                         <path
@@ -113,24 +150,22 @@ $res = $conexion->query($sql)
                                             d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z" />
                                         <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
                                     </svg>
-
                                     Usuarios
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a href="/lab/pacientes/pacientes.php" class="nav-link text-white  hoverbutton">
+                                <a href="/lab/pacientes/pacientes.php" class="nav-link text-white hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white"
                                         viewBox="0 0 16 16">
                                         <path d="M3 1h5l2 2h3v12H3z" />
                                     </svg>
-
                                     Pacientes
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a href="/lab/estudios/estudios.php" class="nav-link text-white active hoverbutton">
+                                <a href="/lab/estudios/estudios.php" class="nav-link text-white hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
                                         stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                         class="me-2">
@@ -139,25 +174,20 @@ $res = $conexion->query($sql)
                                         <line x1="5" y1="9" x2="11" y2="9"></line>
                                         <line x1="5" y1="12" x2="9" y2="12"></line>
                                     </svg>
-
-
                                     Estudios
                                 </a>
                             </li>
+
                             <li class="nav-item">
                                 <a href="/lab/citas/citas.php" class="nav-link text-white hoverbutton">
-                                    <!-- Icono SVG: Citas (calendario + reloj) -->
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
                                         stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        viewBox="0 0 24 24" aria-hidden="true" role="img">
-                                        <!-- Calendario -->
+                                        viewBox="0 0 24 24">
                                         <rect x="3" y="4" width="18" height="18" rx="2"></rect>
                                         <path d="M16 2v4M8 2v4M3 10h18"></path>
-                                        <!-- Reloj pequeño -->
                                         <circle cx="12" cy="16" r="3"></circle>
                                         <path d="M12 14v2l1 1"></path>
                                     </svg>
-
                                     Citas
                                 </a>
                             </li>
@@ -169,10 +199,10 @@ $res = $conexion->query($sql)
                                         <path d="M2 3l6-2 6 2v10l-6 2-6-2V3z" />
                                         <path d="M2 3l6 2 6-2" />
                                     </svg>
-
                                     Almacén
                                 </a>
                             </li>
+
                             <li class="nav-item">
                                 <a href="/lab/caja/caja.php" class="nav-link text-white hoverbutton">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
@@ -181,7 +211,6 @@ $res = $conexion->query($sql)
                                         <path d="M2 4l6-2 6 2v10l-6 2-6-2z"></path>
                                         <path d="M2 4l6 3 6-3"></path>
                                     </svg>
-
                                     Caja
                                 </a>
                             </li>
@@ -190,7 +219,6 @@ $res = $conexion->query($sql)
 
                         <hr>
 
-                        <!-- Perfil -->
                         <div class="dropup">
                             <a href="#"
                                 class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
@@ -218,140 +246,127 @@ $res = $conexion->query($sql)
 
                 </div>
             </div>
-            <span class="navbar-brand">Ordenes de estudio</span>
 
-            <div>
-                <div style=" margin-right: 50px !important;" class="dropdown">
-                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
-                        id="userMenu" data-bs-toggle="dropdown">
+            <span class="navbar-brand">Dashboard</span>
 
-                        <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">
+            <div class="dropdown me-4">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
+                    id="userMenu" data-bs-toggle="dropdown">
 
-                        <strong><?php echo $_SESSION['usuario']; ?></strong>
-                    </a>
+                    <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">
 
-                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                    <strong><?php echo $_SESSION['usuario']; ?></strong>
+                </a>
 
-                        <li><a class="dropdown-item" href="/lab/logout.php">Cerrar sesión</a></li>
-                    </ul>
-                </div>
+                <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                    <li><a class="dropdown-item" href="/lab/logout.php">Cerrar sesión</a></li>
+                </ul>
             </div>
+
         </div>
     </nav>
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>🧾 Órdenes / Estudios trabajados</h3>
-    <a class="btn btn-success" href="/lab/pacientes/pacientes.php">➕ Nueva Orden</a> 
-    <a class="btn btn-success" href="/lab/estudios/catalogoEstudios.php"> Catalogo de Estudios</a>
-  </div>
+<div class="container py-4">
 
-  <!-- FILTROS (no se modificó nada) -->
-  <form class="row g-2 mb-3" method="GET">
-    <div class="col-md-3"><input name="filtro" value="<?=htmlspecialchars($filtro)?>" class="form-control" placeholder="Folio o nombre paciente"></div>
-    <div class="col-md-2">
-      <select name="estado" class="form-select">
-        <option value="">-- Estado --</option>
-        <option value="pendiente" <?= $estado=='pendiente'?'selected':'' ?>>pendiente</option>
-               <option value="en_proceso" <?= $estado=='en_proceso'?'selected':'' ?>>en_proceso</option>
-        <option value="completa" <?= $estado=='completa'?'selected':'' ?>>completa</option>
-      </select>
+    <h2 class="mb-4 fw-bold">Dashboard General</h2>
+
+    <!-- ============ TARJETAS SUPERIORES ============ -->
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <a href="/lab/usuarios/administarUsuarios.php" class="text-decoration-none">
+                <div class="card card-custom p-3 text-center bg-white">
+                    <i class="bi bi-people fs-1 text-primary"></i>
+                    <h4 class="mt-2 mb-0"><?= $usuarios_total ?></h4>
+                    <small class="text-muted">Usuarios Registrados</small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="/lab/pacientes/pacientes.php" class="text-decoration-none">
+                <div class="card card-custom p-3 text-center bg-white">
+                    <i class="bi bi-person-square fs-1 text-success"></i>
+                    <h4 class="mt-2 mb-0"><?= $pacientes_total ?></h4>
+                    <small class="text-muted">Pacientes Totales</small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="/lab/estudios/estudios.php" class="text-decoration-none">
+                <div class="card card-custom p-3 text-center bg-white">
+                    <i class="bi bi-receipt fs-1 text-warning"></i>
+                    <h4 class="mt-2 mb-0"><?= $ordenes["pendientes"] ?></h4>
+                    <small class="text-muted">Ordenes Pendientes</small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="/lab/almacen/reactivos.php" class="text-decoration-none">
+                <div class="card card-custom p-3 text-center bg-white">
+                    <i class="bi bi-box-seam fs-1 text-danger"></i>
+                    <h4 class="mt-2 mb-0"><?= $insumos_en_cero ?></h4>
+                    <small class="text-muted">Insumos en 0</small>
+                </div>
+            </a>
+        </div>
+
     </div>
-    <div class="col-md-2"><input type="date" name="desde" value="<?=$desde?>" class="form-control"></div>
-    <div class="col-md-2"><input type="date" name="hasta" value="<?=$hasta?>" class="form-control"></div>
-    <div class="col-md-1"><button class="btn btn-primary w-100">Filtrar</button></div>
-    <div class="col-md-2"><a href="estudios.php" class="btn btn-secondary w-100">Limpiar</a></div>
-  </form>
 
- 
-  <!-- TABLA CON SCROLL -->
-  <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-    <table class="table table-striped table-hover">
-      <thead class="table-dark position-sticky top-0">
-    <tr>
-      <th>Folio</th>
-      <th>Paciente</th>
-      <th>Fecha Orden</th>
-      <th>Fecha de Cita</th>
-      <th>Estado</th>
-      <th>Total</th>
-      <th>Acciones</th>
-    </tr>
-</thead>
 
-<tbody id="tablaDatos">
-<?php while($row = $res->fetch_assoc()): ?>
-  <tr>
-    <td><?= htmlspecialchars($row['folio']) ?></td>
-    <td><?= htmlspecialchars($row['paciente']) ?></td>
-    <td><?= $row['fecha_creacion'] ?></td>
 
-    <td>
-        <?php if($row['fecha_cita']): ?>
-            <?= $row['fecha_cita'] ?> <?= $row['hora_cita'] ?>
-        <?php else: ?>
-            <span class="text-muted">Sin cita</span>
-        <?php endif; ?>
-    </td>
+    <!-- ============ GRÁFICAS ============ -->
+    <div class="row mt-4">
 
-    <td><?= $row['estado'] ?></td>
-    <td><?= number_format($row['total'],2) ?></td>
+        <div class="col-md-6">
+            <div class="card chart-card card-custom bg-white">
+                <h5 class="mb-3">Estado de Ordenes</h5>
+                <canvas id="chartOrdenes"></canvas>
+            </div>
+        </div>
 
-    <td class="text-nowrap">
-      <a class="btn btn-sm btn-info" href="/lab/pacientes/ordenesEstudios/administrarOrdenes/detalleOrden.php?id=<?= $row['id_orden'] ?>">Ver / Imprimir</a>
-      <a class="btn btn-sm btn-primary" href="/lab/pacientes/ordenesEstudios/ediarOrden.php?id=<?= $row['id_orden'] ?>">Editar</a>
-      <a class="btn btn-sm btn-secondary" href="orden_imprimir.php?id_orden=<?= $row['id_orden'] ?>">Imprimir</a>
-      <button class="btn btn-sm btn-danger" onclick="confirmEliminarOrden(<?= $row['id_orden'] ?>)">Eliminar</button>
-    </td>
-  </tr>
-<?php endwhile; ?>
-</tbody>
+        <div class="col-md-6">
+            <div class="card chart-card card-custom bg-white">
+                <h5 class="mb-3">Inventario General</h5>
+                <canvas id="chartInventario"></canvas>
+            </div>
+        </div>
 
-      <tbody id="tablaDatos">
-        <?php while($row = $res->fetch_assoc()): ?>
-          <tr>
-            <td><?= htmlspecialchars($row['folio']) ?></td>
-            <td><?= htmlspecialchars($row['paciente']) ?></td>
-            <td><?= $row['fecha_creacion'] ?></td>
-            <td><?= $row['estado'] ?></td>
-            <td><?= number_format($row['total'],2) ?></td>
-            <td class="text-nowrap">
-              <a class="btn btn-sm btn-info" href="/lab/pacientes/ordenesEstudios/administrarOrdenes/detalleOrden.php?id=<?= $row['id_orden'] ?>">Ver e Imprimir</a>
-              <a class="btn btn-sm btn-primary" href="/lab/pacientes/ordenesEstudios/ediarOrden.php?id=<?= $row['id_orden'] ?>">Editar</a>
-              <a class="btn btn-sm btn-secondary" href="orden_imprimir.php?id_orden=<?= $row['id_orden'] ?>">Imprimir</a>
-              <button class="btn btn-sm btn-danger" onclick="confirmEliminarOrden(<?= $row['id_orden'] ?>)">Eliminar</button>
-            </td>
-          </tr>
-        <?php endwhile; ?>
-      </tbody>
-    </table>
-  </div>
-   <!-- Selector de paginación -->
-  <div class="d-flex justify-content-end mb-2">
-      <div style="width:150px">
-          <select id="registrosPorPagina" class="form-select">
-              <option value="10">Mostrar 10</option>
-              <option value="20">Mostrar 20</option>
-              <option value="50">Mostrar 50</option>
-          </select>
-      </div>
-  </div>
+    </div>
 
 </div>
 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* PAGINACIÓN CLIENTE */
-const select = document.getElementById('registrosPorPagina');
-const filas = document.querySelectorAll('#tablaDatos tr');
+// =================== CHART ORDENES ===================
+new Chart(document.getElementById('chartOrdenes'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Pendientes', 'En Proceso', 'Completas', 'Pagadas'],
+        datasets: [{
+            data: [
+                <?= $ordenes["pendientes"] ?>,
+                <?= $ordenes["en_proceso"] ?>,
+                <?= $ordenes["completas"] ?>,
+                <?= $ordenes["pagadas"] ?>
+            ]
+        }]
+    }
+});
 
-function actualizarPaginacion() {
-    const limite = parseInt(select.value);
-    filas.forEach((fila, i) => fila.style.display = (i < limite ? '' : 'none'));
-}
-
-select.addEventListener('change', actualizarPaginacion);
-actualizarPaginacion(); // inicial
+// =================== CHART INVENTARIO ===================
+new Chart(document.getElementById('chartInventario'), {
+    type: 'bar',
+    data: {
+        labels: ['Total Insumos', 'En Cero'],
+        datasets: [{
+            data: [<?= $insumos_total ?>, <?= $insumos_en_cero ?>]
+        }]
+    }
+});
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

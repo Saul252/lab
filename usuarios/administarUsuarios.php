@@ -215,7 +215,7 @@ $result= $conexion->query($sql_listar);
             <a href="registrar.php" class="btn btn-primary">➕ Crear nuevo usuario</a>
         </div>
 
-       <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+       <div class="table-responsive scroll-tabla" >
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-dark sticky-top">
             <tr>

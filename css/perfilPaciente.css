@@ -1,0 +1,54 @@
+
+
+    body {
+        background:#f4f6f9;
+        font-family: "Segoe UI", sans-serif;
+    }
+    .profile-card {
+        background:#fff;
+        border-radius:20px;
+        padding:35px;
+        box-shadow:0 8px 25px rgba(0,0,0,0.1);
+    }
+    .profile-header {
+        display:flex;
+        align-items:center;
+        gap:20px;
+        border-bottom:1px solid #e5e5e5;
+        padding-bottom:20px;
+    }
+    .profile-avatar {
+        width:95px;
+        height:95px;
+        border-radius:50%;
+        background:#d7e3ff;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        font-size:40px;
+        color:#3f6cff;
+        font-weight:bold;
+    }
+    .section-title {
+        font-weight:600;
+        font-size:1.3rem;
+        margin-top:30px;
+        color:#2c3e50;
+    }
+    .history-card {
+        padding:20px;
+        border-radius:12px;
+        background:#ffffff;
+        box-shadow:0 5px 20px rgba(0,0,0,0.06);
+        margin-bottom:15px;
+        border-left:5px solid #0d6efd;
+    }
+    .status-pill {
+        padding:5px 12px;
+        border-radius:12px;
+        font-size:.8rem;
+        font-weight:bold;
+    }
+    .status-proceso { background:#fff3cd; color:#a07400; }
+    .status-listo { background:#d1e7dd; color:#0f5132; }
+    .status-cancelado { background:#f8d7da; color:#842029; }

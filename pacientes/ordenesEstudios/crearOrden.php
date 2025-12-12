@@ -280,7 +280,7 @@ $estudios = $estudios_q->fetch_all(MYSQLI_ASSOC);
           <p class="small-muted mb-3">Complete fecha/hora y seleccione uno o más estudios del catálogo.</p>
 
           <!-- Form -->
-          <form id="formOrden" method="POST" action="guardarOrden.php">
+          <form id="formOrden" method="POST" action="administrarOrdenes/guardarOrden.php">
 
             <input type="hidden" name="id_paciente" value="<?= $id_paciente ?>">
 

@@ -30,7 +30,7 @@ session_start();
 
             <div class="card-body">
 
-                <form action="guardar_usuario.php" method="POST">
+                <form action="/lab/usuarios/acciones_usuarios/guardar_usuario.php" method="POST">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre completo</label>
@@ -67,7 +67,7 @@ session_start();
                     </div>
 
                     <button type="submit" class="btn btn-success px-4">Registrar Usuario</button>
-                    <a href="../bienvenida.php" class="btn btn-secondary">Cancelar</a>
+                    <a href="/lab/usuarios/administarUsuarios.php" class="btn btn-secondary">Cancelar</a>
                 </form>
 
             </div>
