@@ -299,9 +299,11 @@ $res = $conexion->query($sql)
     <td class="text-nowrap">
       <a class="btn btn-sm btn-info" href="/lab/pacientes/ordenesEstudios/administrarOrdenes/detalleOrden.php?id=<?= $row['id_orden'] ?>">Ver / Imprimir</a>
       <a class="btn btn-sm btn-primary" href="/lab/pacientes/ordenesEstudios/ediarOrden.php?id=<?= $row['id_orden'] ?>">Editar</a>
-      <a class="btn btn-sm btn-secondary" href="orden_imprimir.php?id_orden=<?= $row['id_orden'] ?>">Imprimir</a>
-      <button class="btn btn-sm btn-danger" onclick="confirmEliminarOrden(<?= $row['id_orden'] ?>)">Eliminar</button>
-    </td>
+      <a class="btn btn-sm btn-success" href="/lab/estudios/realizarEstudio.php?id=<?= $row['id_orden'] ?>">Realizar</a>
+      <a href="/lab/pacientes/ordenesEstudios/administrarOrdenes/eliminarOrden.php?id=<?= $row['id_orden'] ?>" 
+   class="btn btn-sm btn-danger">
+   Eliminar
+</a> </td>
   </tr>
 <?php endwhile; ?>
 </tbody>
@@ -317,8 +319,11 @@ $res = $conexion->query($sql)
             <td class="text-nowrap">
               <a class="btn btn-sm btn-info" href="/lab/pacientes/ordenesEstudios/administrarOrdenes/detalleOrden.php?id=<?= $row['id_orden'] ?>">Ver e Imprimir</a>
               <a class="btn btn-sm btn-primary" href="/lab/pacientes/ordenesEstudios/ediarOrden.php?id=<?= $row['id_orden'] ?>">Editar</a>
-              <a class="btn btn-sm btn-secondary" href="orden_imprimir.php?id_orden=<?= $row['id_orden'] ?>">Imprimir</a>
-              <button class="btn btn-sm btn-danger" onclick="confirmEliminarOrden(<?= $row['id_orden'] ?>)">Eliminar</button>
+              <a class="btn btn-sm btn btn-success"" href="/lab/estudios/realizarEstudio.php?id=<?= $row['id_orden'] ?>">Realizar</a>
+              <a href="/lab/pacientes/ordenesEstudios/administrarOrdenes/eliminarOrden.php?id=<?= $row['id_orden'] ?>" 
+   class="btn btn-sm btn-danger">
+   Eliminar
+</a>
             </td>
           </tr>
         <?php endwhile; ?>
