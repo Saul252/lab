@@ -4,6 +4,8 @@ require "../../conexion.php";
 // Recibir datos
 $codigo = $_POST["codigo"];
 $nombre = $_POST["nombre"];
+$tipo_estudio = $_POST["tipo"];
+
 $precio = $_POST["precio"];
 $unidad = $_POST["unidad"];
 $tipo   = $_POST["tipo_resultado"];
@@ -16,11 +18,11 @@ $m_max = $_POST["rango_mujer_max"] !== "" ? $_POST["rango_mujer_max"] : "NULL";
 $descripcion = $_POST["descripcion"];
 
 $sql = "INSERT INTO estudios 
-        (codigo, nombre, precio, unidad, tipo_resultado,
+        (codigo, nombre, tipo, precio, unidad, tipo_resultado,
         rango_hombre_min, rango_hombre_max, 
         rango_mujer_min, rango_mujer_max, descripcion)
         VALUES
-        ('$codigo', '$nombre', '$precio', '$unidad', '$tipo',
+        ('$codigo', '$nombre', '$tipo_estudio', '$precio', '$unidad', '$tipo',
         $h_min, $h_max, $m_min, $m_max, '$descripcion')";
 
 if ($conexion->query($sql)) {
@@ -44,7 +46,7 @@ Swal.fire({
     text: 'El estudio se registró correctamente.',
     confirmButtonColor: '#3085d6'
 }).then(() => {
-    window.location.href = "../estudios.php?ok=1";
+    window.location.href = "../catalogoEstudios.php?ok=1";
 });
 <?php else: ?>
 Swal.fire({

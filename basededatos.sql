@@ -117,7 +117,7 @@ CREATE TABLE resultados (
     capturado_por INT,
     validado_por INT,
     aprobado_por INT,
-    url_archivo varchar(50)
+    url_archivo varchar(50),
 
     fecha_captura TIMESTAMP NULL,
     fecha_validacion TIMESTAMP NULL,

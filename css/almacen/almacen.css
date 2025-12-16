@@ -1,0 +1,6 @@
+body { background: #f4f5f7; }
+.card-custom { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+.table-container { max-height: 500px; overflow-y: auto; }
+thead th { position: sticky; top: 0; background: #e9ecef; z-index: 10; }
+.badge-low { background-color: #dc3545 !important; } /* rojo para stock bajo */
+.badge-ok { background-color: #6c757d !important; } /* gris para suficiente stock */

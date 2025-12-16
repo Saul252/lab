@@ -7,40 +7,118 @@ if (!isset($_SESSION["usuario"])) {
     header("Location: login.php");
     exit();
 }
+$estudios = $conexion->query("SELECT id_estudio, nombre, precio FROM estudios ORDER BY nombre ASC");
 
 // -------------------- Guardar nueva cita (POST) --------------------
 $mensaje = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'guardar_cita') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && ($_POST['action'] ?? '') === 'guardar_cita') {
+
     $id_paciente = intval($_POST['id_paciente'] ?? 0);
     $fecha_cita  = $_POST['fecha_cita'] ?? '';
     $hora_cita   = $_POST['hora_cita'] ?? '';
     $observ      = trim($_POST['observaciones'] ?? '');
+    $estudiosSel = $_POST['estudios'] ?? [];
 
-    if ($id_paciente <= 0 || !$fecha_cita || !$hora_cita) {
-        $mensaje = ['tipo' => 'error', 'texto' => 'Faltan datos obligatorios para crear la cita.'];
+    if ($id_paciente <= 0 || !$fecha_cita || !$hora_cita || empty($estudiosSel)) {
+        $mensaje = ['tipo'=>'error','texto'=>'Paciente, fecha, hora y al menos un estudio son obligatorios'];
     } else {
-        // Opcional: validar conflicto de horario (misma fecha y hora)
-        $stmt = $conexion->prepare("SELECT COUNT(*) AS cnt FROM citas WHERE fecha_cita = ? AND hora_cita = ?");
-        $stmt->bind_param("ss", $fecha_cita, $hora_cita);
-        $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
 
-        if ($r && intval($r['cnt']) > 0) {
-            $mensaje = ['tipo' => 'warning', 'texto' => 'Ya existe otra cita en esa fecha/hora.'];
-        } else {
-            $ins = $conexion->prepare("INSERT INTO citas (id_paciente, fecha_cita, hora_cita, observaciones) VALUES (?, ?, ?, ?)");
-            $ins->bind_param("isss", $id_paciente, $fecha_cita, $hora_cita, $observ);
-            if ($ins->execute()) {
-                $mensaje = ['tipo' => 'success', 'texto' => 'Cita creada correctamente.'];
-            } else {
-                $mensaje = ['tipo' => 'error', 'texto' => 'Error al guardar la cita: ' . $conexion->error];
+        $conexion->begin_transaction();
+
+        try {
+            /* 1️⃣ Crear cita */
+            $stmt = $conexion->prepare(
+                "INSERT INTO citas (id_paciente, fecha_cita, hora_cita, observaciones)
+                 VALUES (?,?,?,?)"
+            );
+            $stmt->bind_param("isss", $id_paciente, $fecha_cita, $hora_cita, $observ);
+            $stmt->execute();
+            $id_cita = $stmt->insert_id;
+            $stmt->close();
+
+            /* 2️⃣ Crear orden */
+            $folio = 'ORD-' . date('Ymd') . '-' . rand(1000,9999);
+
+            $stmt = $conexion->prepare(
+                "INSERT INTO ordenes (folio, id_paciente, id_cita)
+                 VALUES (?,?,?)"
+            );
+            $stmt->bind_param("sii", $folio, $id_paciente, $id_cita);
+            $stmt->execute();
+            $id_orden = $stmt->insert_id;
+            $stmt->close();
+
+            /* 3️⃣ Insertar estudios */
+            $total = 0;
+
+            $stmtEst = $conexion->prepare(
+                "SELECT precio FROM estudios WHERE id_estudio = ?"
+            );
+
+            $stmtIns = $conexion->prepare(
+                "INSERT INTO orden_estudios (id_orden, id_estudio)
+                 VALUES (?,?)"
+            );
+
+            foreach ($estudiosSel as $id_estudio) {
+                $id_estudio = intval($id_estudio);
+
+                $stmtEst->bind_param("i", $id_estudio);
+                $stmtEst->execute();
+                $precio = $stmtEst->get_result()->fetch_assoc()['precio'] ?? 0;
+
+                $stmtIns->bind_param("ii", $id_orden, $id_estudio);
+                $stmtIns->execute();
+
+                $total += $precio;
             }
-            $ins->close();
+
+            $stmtEst->close();
+            $stmtIns->close();
+
+            /* 4️⃣ Actualizar total */
+            $stmt = $conexion->prepare(
+                "UPDATE ordenes SET total = ? WHERE id_orden = ?"
+            );
+            $stmt->bind_param("di", $total, $id_orden);
+            $stmt->execute();
+            $stmt->close();
+
+            $conexion->commit();
+
+            $mensaje = [
+                'tipo'=>'success',
+                'texto'=>"Cita y orden creadas correctamente (Folio: $folio)"
+            ];
+
+        } catch (Exception $e) {
+            $conexion->rollback();
+            $mensaje = ['tipo'=>'error','texto'=>'Error al guardar: '.$e->getMessage()];
         }
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['action'])
+    && $_POST['action'] === 'cambiar_estado') {
+
+    $id_cita = intval($_POST['id_cita'] ?? 0);
+    $estado  = $_POST['estado'] ?? '';
+
+    if ($id_cita > 0 && in_array($estado, ['programada','completada','cancelada'])) {
+
+        $stmt = $conexion->prepare("UPDATE citas SET estado = ? WHERE id_cita = ?");
+        $stmt->bind_param("si", $estado, $id_cita);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(['ok' => true]);
+    } else {
+        echo json_encode(['ok' => false]);
+    }
+    exit;
+}
 // -------------------- Lecturas para mostrar en la página --------------------
 
 // 1) Todas las citas (para FullCalendar y listado general)
@@ -84,6 +162,9 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
 <head>
   <meta charset="utf-8">
   <title>Citas — Laboratorio</title>
+
+    <link rel="stylesheet" href="/lab/css/style.css">
+    <link rel="stylesheet" href="/lab/css/sidebar.css">
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -297,6 +378,7 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
 
         </div>
     </nav>
+
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="mb-0">Gestión de Citas</h4>
@@ -373,13 +455,33 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <label class="form-label">Paciente</label>
-          <select name="id_paciente" class="form-select" required>
-            <option value="">-- Seleccione --</option>
-            <?php while ($pRow = $pac->fetch_assoc()): ?>
-              <option value="<?= $pRow['id_paciente'] ?>"><?= htmlspecialchars($pRow['nombre']) ?></option>
-            <?php endwhile; ?>
-          </select>
+        <label class="form-label">Paciente</label>
+
+<div class="input-group">
+  <select name="id_paciente" id="selectPaciente" class="form-select" required>
+    <option value="">-- Seleccione un paciente --</option>
+    <?php
+    $pac->data_seek(0);
+    while ($pRow = $pac->fetch_assoc()):
+    ?>
+      <option value="<?= $pRow['id_paciente'] ?>">
+        <?= htmlspecialchars($pRow['nombre']) ?>
+      </option>
+    <?php endwhile; ?>
+  </select>
+
+  <!-- 🔹 BOTÓN AGREGAR PACIENTE -->
+  <button class="btn btn-outline-success"
+          type="button"
+          onclick="abrirModalPaciente()"
+          title="Agregar nuevo paciente">
+    <i class="bi bi-person-plus"></i>
+  </button>
+</div>
+
+<small class="text-muted">
+  ¿No aparece el paciente? Agrégalo aquí.
+</small>
 
           <label class="form-label mt-3">Fecha</label>
           <input type="date" name="fecha_cita" class="form-control" required value="<?= date('Y-m-d') ?>">
@@ -389,6 +491,19 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
 
           <label class="form-label mt-3">Observaciones</label>
           <textarea name="observaciones" class="form-control" rows="3"></textarea>
+          <label class="form-label mt-3">Estudios</label>
+<div class="border rounded p-2" style="max-height:200px; overflow:auto;">
+  <?php while ($e = $estudios->fetch_assoc()): ?>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox"
+             name="estudios[]" value="<?= $e['id_estudio'] ?>" id="est<?= $e['id_estudio'] ?>">
+      <label class="form-check-label" for="est<?= $e['id_estudio'] ?>">
+        <?= htmlspecialchars($e['nombre']) ?> ($<?= number_format($e['precio'],2) ?>)
+      </label>
+    </div>
+  <?php endwhile; ?>
+</div>
+
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -397,6 +512,81 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
       </form>
     </div>
   </div>
+<!-- MODAL: Agregar Paciente -->
+<div class="modal fade" id="modalPaciente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <form id="formPaciente" >
+
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-person-plus"></i> Registrar Paciente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre completo</label>
+              <input type="text" name="nombre" class="form-control" required>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Edad</label>
+              <input type="number" name="edad" class="form-control">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Sexo</label>
+              <select name="sexo" class="form-select">
+                <option value="H">Hombre</option>
+                <option value="M">Mujer</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Domicilio</label>
+            <input type="text" name="domicilio" class="form-control">
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input type="text" name="telefono" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Médico Solicitante</label>
+            <input type="text" name="medico_solicitante" class="form-control">
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-success">
+            Guardar Paciente
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -416,16 +606,40 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
     // Inicializar FullCalendar con eventos desde PHP (array)
     const citas = <?php
         // convertir a array de eventos que FullCalendar entienda
-        $events = [];
-        foreach ($citasArr as $c) {
-            $events[] = [
-                'id' => $c['id_cita'],
-                'title' => $c['paciente'],
-                'start' => $c['fecha_cita'] . 'T' . substr($c['hora_cita'],0,5),
-                'allDay' => false,
-                'extendedProps' => ['hora' => substr($c['hora_cita'],0,5), 'observ' => $c['observaciones'] ?? '', 'estado' => $c['estado']]
-            ];
-        }
+$events = [];
+foreach ($citasArr as $c) {
+
+    // 🔹 color según estado
+    switch ($c['estado']) {
+        case 'completada':
+            $color = '#198754'; // verde
+            break;
+        case 'cancelada':
+            $color = '#dc3545'; // rojo
+            break;
+        default:
+            $color = '#0d6efd'; // azul (programada)
+    }
+
+    $events[] = [
+        'id' => $c['id_cita'],
+        'title' => $c['paciente'],
+        'start' => $c['fecha_cita'] . 'T' . substr($c['hora_cita'],0,5),
+        'allDay' => false,
+
+        // 👉 colores para FullCalendar
+        'backgroundColor' => $color,
+        'borderColor'     => $color,
+
+        // 👉 datos extra (NO se rompen)
+        'extendedProps' => [
+            'hora'   => substr($c['hora_cita'],0,5),
+            'observ' => $c['observaciones'] ?? '',
+            'estado' => $c['estado']
+        ]
+    ];
+}
+
         echo json_encode($events);
     ?>;
 
@@ -442,23 +656,45 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
         height: 'auto',
         events: citas,
         eventClick: function(info) {
-          const e = info.event;
-          let html = `<strong>${e.title}</strong><br>${e.extendedProps.hora}`;
-          if (e.extendedProps.observ) html += `<br><small>${e.extendedProps.observ}</small>`;
-          Swal.fire({
-            title: 'Detalle de cita',
-            html: html,
-            showCancelButton: true,
-            confirmButtonText: 'Editar',
-            cancelButtonText: 'Cerrar'
-          }).then((res)=>{
-            if (res.isConfirmed) {
-              // redirigir a editar (debes tener editar_cita.php)
-              window.location = 'editar_cita.php?id=' + e.id;
-            }
-          });
-        }
-      });
+  const e = info.event;
+
+  let html = `<strong>${e.title}</strong><br>${e.extendedProps.hora}`;
+  if (e.extendedProps.observ) {
+    html += `<br><small>${e.extendedProps.observ}</small>`;
+  }
+
+  Swal.fire({
+    title: 'Detalle de cita',
+    html: html,
+    input: 'select',
+    inputOptions: {
+      programada: 'Programada',
+      completada: 'Completada',
+      cancelada: 'Cancelada'
+    },
+    inputValue: e.extendedProps.estado,
+    showCancelButton: true,
+    confirmButtonText: 'Guardar estado',
+    cancelButtonText: 'Cerrar'
+  }).then((res)=>{
+    if (!res.isConfirmed) return;
+
+    fetch('', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        action: 'cambiar_estado',
+        id_cita: e.id,
+        estado: res.value
+      })
+    })
+    .then(r => r.json())
+    .then(j => {
+      if (j.ok) location.reload();
+    });
+  });
+}
+ });
       calendar.render();
     });
 
@@ -467,4 +703,61 @@ $pac = $conexion->query("SELECT id_paciente, nombre FROM pacientes ORDER BY nomb
     }
   </script>
 </body>
+<script>
+function abrirModalPaciente() {
+  const modal = new bootstrap.Modal(
+    document.getElementById('modalPaciente')
+  );
+  modal.show();
+}
+</script>
+<script>
+document.getElementById('formPaciente').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const form = this;
+  const data = new FormData(form);
+
+  fetch('/lab/pacientes/accionesPacientes.php/guadarPcienteajax.php', {
+    method: 'POST',
+    body: data
+  })
+  .then(r => r.json())
+  .then(resp => {
+
+    if (!resp.ok) {
+      Swal.fire('Error', resp.msg, 'error');
+      return;
+    }
+
+    // 🔄 Actualizar SELECT de pacientes
+    const select = document.getElementById('selectPaciente');
+    const option = document.createElement('option');
+    option.value = resp.id;
+    option.textContent = resp.nombre;
+    option.selected = true;
+    select.appendChild(option);
+
+    // ✅ Cerrar modal
+    bootstrap.Modal.getInstance(
+      document.getElementById('modalPaciente')
+    ).hide();
+
+    form.reset();
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Paciente agregado',
+      timer: 1400,
+      showConfirmButton: false
+    });
+
+  })
+  .catch(() => {
+    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+  });
+});
+</script>
+
+
 </html>

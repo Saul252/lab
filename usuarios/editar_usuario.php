@@ -85,7 +85,9 @@ $data = $result->fetch_assoc();
                 </div>
 
                 <button type="submit" class="btn btn-primary px-4">Guardar cambios</button>
-                <a href="usuarios/administarUsuarios.php" class="btn btn-secondary">Cancelar</a>
+                <button class="btn btn-secondary" onclick="history.back()">
+    ⬅ Volver
+</button>
 
             </form>
 

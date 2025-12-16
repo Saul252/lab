@@ -166,9 +166,11 @@ $estudios = $queryEstudios->get_result();
                 </a>
 
                 <!-- Botón futuro para descargar -->
-                <button class="btn btn-outline-primary btn-sm" disabled>
-                    Descargar PDF
-                </button>
+               <a href="/lab/estudios/interpretacionEstudio.php?id_orden_estudio=<?= $e['id_orden_estudio'] ?>"
+   class="btn btn-sm btn-outline-primary">
+   Ver resultado
+</a>
+
             </div>
         </div>
 

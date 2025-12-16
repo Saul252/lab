@@ -48,6 +48,7 @@ $estudios = $conexion->query($sql);
             <tr>
                 <th>Código</th>
                 <th>Nombre</th>
+                 <th>Tipo</th>
                 <th>Precio</th>
                 <th>Tipo</th>
 
@@ -70,6 +71,7 @@ $estudios = $conexion->query($sql);
 
                 <td><?= $e['codigo'] ?></td>
                 <td class="col-desc"><?= $e['nombre'] ?></td>
+                 <td class="col-desc"><?= $e['tipo'] ?></td>
                 <td>$<?= number_format($e['precio'],2) ?></td>
                 <td><?= $e['tipo_resultado'] ?></td>
 
@@ -88,13 +90,14 @@ $estudios = $conexion->query($sql);
                 </td>
 
                 <td class="text-center">
-                    <a href="editar_estudio.php?id=<?= $e['id_estudio'] ?>"
+                    <a href="editarEstudio.php?id=<?= $e['id_estudio'] ?>"
                        class="btn btn-warning btn-sm">✏️ Editar</a>
 
-                    <button class="btn btn-danger btn-sm"
-                        onclick="eliminarEstudio(<?= $e['id_estudio'] ?>)">
-                        🗑️ Eliminar
-                    </button>
+                   
+                        <a href="accionesEstudios/eliminarEstudio.php?id=<?= $e['id_estudio'] ?>"
+                       class="btn btn-danger btn-sm"> 🗑️ Eliminar</a>
+                       
+                    
                 </td>
 
             </tr>
@@ -106,42 +109,13 @@ $estudios = $conexion->query($sql);
 
 
         </div>
+        
     </div>
+<button onclick="history.back()" class="btn btn-secondary">
+    ← Regresar
+</button>
 
 </div>
-
-<script>
-// FILTRO
-document.getElementById("buscar").addEventListener("input", function(){
-    const q = this.value.toLowerCase();
-
-    document.querySelectorAll("#tablaEstudios tr").forEach(row => {
-        const match =
-            row.dataset.nombre.includes(q) ||
-            row.dataset.codigo.includes(q) ||
-            row.dataset.desc.includes(q);
-
-        row.style.display = match ? "" : "none";
-    });
-});
-
-// SWEETALERT ELIMINAR
-function eliminarEstudio(id){
-    Swal.fire({
-        title: "¿Eliminar estudio?",
-        text: "Esta acción no se puede deshacer",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar"
-    }).then(res => {
-        if(res.isConfirmed){
-            window.location = "eliminar_estudio.php?id=" + id;
-        }
-    });
-}
-</script>
 
 </body>
 </html>

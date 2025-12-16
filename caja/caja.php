@@ -44,8 +44,16 @@ elseif ($filtro === "mes" && $valor != "") {
 
 $sql_corte = "
 SELECT 
-    p.*, 
+    p.id_pago,
+    p.id_orden,
+    p.monto,
+    p.metodo,
+    p.referencia,
+    p.fecha_pago,
+
     o.folio,
+    o.total AS total_orden,
+
     pa.nombre AS paciente
 FROM pagos p
 INNER JOIN ordenes o ON o.id_orden = p.id_orden
@@ -53,6 +61,7 @@ INNER JOIN pacientes pa ON pa.id_paciente = o.id_paciente
 $where
 ORDER BY p.fecha_pago DESC
 ";
+
 $res_corte = $conexion->query($sql_corte);
 
 // Total
@@ -62,10 +71,11 @@ $total_corte = $res_total->fetch_assoc()["total"] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Caja</title>
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <link rel="stylesheet" href="/lab/css/style.css">
@@ -77,27 +87,36 @@ $total_corte = $res_total->fetch_assoc()["total"] ?? 0;
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        body { background: #f4f5f7; }
-        .card-custom {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .scroll-table {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        thead th {
-            position: sticky;
-            top: 0;
-            background: #e9ecef;
-            z-index: 10;
-        }
+    body {
+        background: #f4f5f7;
+    }
+
+    .card-custom {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .scroll-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        background: #e9ecef;
+        z-index: 10;
+    }
     </style>
 </head>
+
 <body>
-<nav class="navbar navbar-dark bg-dark mb-4">
+    <!-- =========================================================
+         Navbar
+         ========================================================= -->
+    <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid">
 
             <button class="btn btn-dark d-flex align-items-center gap-2" type="button" data-bs-toggle="offcanvas"
@@ -282,248 +301,283 @@ $total_corte = $res_total->fetch_assoc()["total"] ?? 0;
 
         </div>
     </nav>
-<div class="container py-4">
+    <div class="container py-4">
 
-    <h3 class="fw-bold mb-3">💲 Caja y Pagos</h3>
+        <h3 class="fw-bold mb-3">💲 Caja y Pagos</h3>
 
-    <!-- =========================================================
+        <!-- =========================================================
          ÓRDENES PENDIENTES
          ========================================================= -->
-    <div class="card-custom mb-4">
-        <h5 class="mb-3">Órdenes pendientes de pago</h5>
+        <div class="card-custom mb-4">
+            <h5 class="mb-3">Órdenes pendientes de pago</h5>
 
-        <div class="scroll-table">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Folio</th>
-                        <th>Paciente</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                        <th width="150">Acciones</th>
-                    </tr>
-                </thead>
+            <div class="scroll-table">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Paciente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th width="150">Acciones</th>
+                        </tr>
+                    </thead>
 
-                <tbody>
-                    <?php while($o = $res->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= $o['folio'] ?></td>
-                        <td><?= $o['paciente'] ?></td>
-                        <td>$<?= number_format($o['total'],2) ?></td>
-                        <td>
-                            <span class="badge 
+                    <tbody>
+                        <?php while($o = $res->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $o['folio'] ?></td>
+                            <td><?= $o['paciente'] ?></td>
+                            <td>$<?= number_format($o['total'],2) ?></td>
+                            <td>
+                                <span class="badge 
                                 <?= $o['estado']=='pendiente' ? 'bg-warning' : 'bg-info' ?>">
-                                <?= ucfirst($o['estado']) ?>
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-success"
-                                    onclick="cobrar(<?= $o['id_orden'] ?>)">
-                                Cobrar
-                            </button>
+                                    <?= ucfirst($o['estado']) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success" onclick="cobrar(this)"
+                                    data-id="<?= $o['id_orden'] ?>" data-folio="<?= $o['folio'] ?>"
+                                    data-paciente="<?= htmlspecialchars($o['paciente']) ?>"
+                                    data-total="<?= $o['total'] ?>">
+                                    Cobrar
+                                </button>
 
-                            <button class="btn btn-sm btn-secondary"
-                                    onclick="historial(<?= $o['id_orden'] ?>)">
-                                Historial
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
 
-            </table>
+                               
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+
+                </table>
+            </div>
         </div>
-    </div>
+        <!-- =========================================================
+         Modal Cobrar
+         ========================================================= -->
+        <div class="modal fade" id="modalCobrar" tabindex="-1">
+            <div class="modal-dialog">
+                <form id="formCobro" class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cobrar orden</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <input type="hidden" name="id_orden" id="id_orden">
+
+                        <p><strong>Folio:</strong> <span id="txtFolio"></span></p>
+                        <p><strong>Paciente:</strong> <span id="txtPaciente"></span></p>
+
+                        <div class="mb-3">
+                            <label class="form-label">Monto</label>
+                            <input type="number" step="0.01" class="form-control" name="monto" id="monto" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Método de pago</label>
+                            <select class="form-select" name="metodo" required>
+                                <option value="">Seleccione...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Referencia</label>
+                            <input type="text" class="form-control" name="referencia">
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            Registrar pago
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
 
 
 
-    <!-- =========================================================
+        <!-- =========================================================
          CORTE DE CAJA
          ========================================================= -->
-    <div class="card-custom">
+        <div class="card-custom">
 
-        <h5 class="mb-3">📊 Corte de Caja</h5>
+            <h5 class="mb-3">📊 Corte de Caja</h5>
 
-        <form class="row g-3 mb-3" method="GET">
-            
-            <!-- Tipo de corte -->
-            <div class="col-md-3">
-                <label class="form-label">Tipo de corte</label>
-                <select name="filtro" class="form-select" required>
-                    <option value="">Seleccione...</option>
-                    <option value="dia" <?= $filtro=="dia"?"selected":"" ?>>Por Día</option>
-                    <option value="semana" <?= $filtro=="semana"?"selected":"" ?>>Por Semana</option>
-                    <option value="mes" <?= $filtro=="mes"?"selected":"" ?>>Por Mes</option>
-                </select>
-            </div>
+            <form class="row g-3 mb-3" method="GET">
 
-            <!-- Valor del filtro -->
-            <div class="col-md-4">
-                <label class="form-label">Seleccione</label>
+                <!-- Tipo de corte -->
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de corte</label>
+                    <select name="filtro" class="form-select" required>
+                        <option value="">Seleccione...</option>
+                        <option value="dia" <?= $filtro=="dia"?"selected":"" ?>>Por Día</option>
+                        <option value="semana" <?= $filtro=="semana"?"selected":"" ?>>Por Semana</option>
+                        <option value="mes" <?= $filtro=="mes"?"selected":"" ?>>Por Mes</option>
+                    </select>
+                </div>
 
-                <?php if ($filtro == "dia"): ?>
-                    <input type="date" name="valor" value="<?= $valor ?>" class="form-control">
+                <!-- Valor del filtro -->
                 
-                <?php elseif ($filtro == "mes"): ?>
-                    <input type="month" name="valor" value="<?= $valor ?>" class="form-control">
 
-                <?php elseif ($filtro == "semana"): ?>
-                    <input type="week" name="valor" value="<?= $valor ?>" class="form-control">
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100">Aplicar</button>
+                </div>
+            </form>
 
-                <?php else: ?>
-                    <input type="text" class="form-control" disabled placeholder="Seleccione tipo de corte">
-                <?php endif; ?>
+            <!-- TOTAL -->
+            <div class="alert alert-info">
+                <h5 class="m-0">Total del corte:
+                    <strong>$<?= number_format($total_corte,2) ?></strong>
+                </h5>
             </div>
 
-            <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-primary w-100">Aplicar</button>
+            <!-- TABLA DEL CORTE -->
+            <div id="pdfCorte">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Folio</th>
+                            <th>Paciente</th>
+                            <th>Método</th>
+                            <th>Monto</th>
+                            <th>Fecha Pago</th>
+                         
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while($p = $res_corte->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $p['id_pago'] ?></td>
+                            <td><?= $p['folio'] ?></td>
+                            <td><?= $p['paciente'] ?></td>
+                            <td><?= ucfirst($p['metodo']) ?></td>
+                            <td>$<?= number_format($p['monto'],2) ?></td>
+                            <td><?= $p['fecha_pago'] ?></td>
+                            
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
             </div>
-        </form>
 
-        <!-- TOTAL -->
-        <div class="alert alert-info">
-            <h5 class="m-0">Total del corte: 
-                <strong>$<?= number_format($total_corte,2) ?></strong>
-            </h5>
+            <button class="btn btn-danger mt-3" onclick="descargarPDF()">Descargar PDF</button>
         </div>
 
-        <!-- TABLA DEL CORTE -->
-        <div id="pdfCorte">
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>Folio</th>
-                        <th>Paciente</th>
-                        <th>Método</th>
-                        <th>Monto</th>
-                        <th>Fecha Pago</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php while($p = $res_corte->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= $p['id_pago'] ?></td>
-                        <td><?= $p['folio'] ?></td>
-                        <td><?= $p['paciente'] ?></td>
-                        <td><?= ucfirst($p['metodo']) ?></td>
-                        <td>$<?= number_format($p['monto'],2) ?></td>
-                        <td><?= $p['fecha_pago'] ?></td>
-                    </tr>
-                <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <button class="btn btn-danger mt-3" onclick="descargarPDF()">Descargar PDF</button>
     </div>
 
-</div>
+    <!-- Modal Editar cobro -->
+    
 
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- scrip descargar pdf -->
+    <script>
+    function descargarPDF() {
+        const {
+            jsPDF
+        } = window.jspdf;
+        let pdf = new jsPDF('p', 'pt', 'a4');
+        let area = document.getElementById("pdfCorte");
 
-<!-- =========================================================
-     MODAL COBRAR
-     ========================================================= -->
-<div class="modal fade" id="modalCobrar" tabindex="-1">
-    <div class="modal-dialog">
-        <form class="modal-content" method="POST" action="registrar_pago.php">
+        html2canvas(area).then(canvas => {
+            let img = canvas.toDataURL("image/png");
+            let ancho = pdf.internal.pageSize.getWidth();
+            let alto = canvas.height * ancho / canvas.width;
 
-            <div class="modal-header">
-                <h5 class="modal-title">Registrar Pago</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+            pdf.addImage(img, 'PNG', 0, 20, ancho, alto);
+            pdf.save("corte_caja.pdf");
+        });
+    }
+    </script>
+    <!-- scrip registrar pago -->
+    <script>
+    function cobrar(btn) {
 
-            <div class="modal-body">
+        const idOrden = btn.dataset.id;
+        const folio = btn.dataset.folio;
+        const paciente = btn.dataset.paciente;
+        const total = btn.dataset.total;
 
-                <input type="hidden" id="pago_id_orden" name="id_orden">
+        document.getElementById("id_orden").value = idOrden;
+        document.getElementById("txtFolio").textContent = folio;
+        document.getElementById("txtPaciente").textContent = paciente;
+        document.getElementById("monto").value = total;
 
-                <label class="form-label">Monto a pagar</label>
-                <input type="number" class="form-control" name="monto" id="pago_monto" required step="0.01">
-
-                <label class="form-label mt-3">Método de Pago</label>
-                <select class="form-select" name="metodo" required>
-                    <option value="">Seleccione...</option>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="tarjeta">Tarjeta</option>
-                    <option value="transferencia">Transferencia</option>
-                </select>
-
-                <label class="form-label mt-3">Referencia (opcional)</label>
-                <input type="text" class="form-control" name="referencia">
-
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-success">Registrar Pago</button>
-            </div>
-
-        </form>
-    </div>
-</div>
+        new bootstrap.Modal(
+            document.getElementById("modalCobrar")
+        ).show();
+    }
 
 
+    document.getElementById("formCobro").addEventListener("submit", function(e) {
+        e.preventDefault();
 
-<!-- =========================================================
-     MODAL HISTORIAL
-     ========================================================= -->
-<div class="modal fade" id="modalHistorial" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        let datos = new FormData(this);
 
-            <div class="modal-header">
-                <h5 class="modal-title">Historial de Pagos</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+        Swal.fire({
+            title: 'Confirmar cobro',
+            text: '¿Deseas registrar este pago?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cobrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
 
-            <div class="modal-body" id="historialBody">
-                Cargando...
-            </div>
+            if (!result.isConfirmed) return;
 
-        </div>
-    </div>
-</div>
+            Swal.fire({
+                title: 'Procesando...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
 
+            fetch("/lab/caja/registrarPago.php", {
+                    method: "POST",
+                    body: datos
+                })
+                .then(r => r.json())
+                .then(res => {
 
+                    if (res.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pago registrado',
+                            text: 'El pago se guardó correctamente'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: res.error
+                        });
+                    }
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                })
+                .catch(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error de conexión con el servidor'
+                    });
+                });
 
-<script>
-function cobrar(id) {
-    fetch("get_total_orden.php?id=" + id)
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("pago_id_orden").value = id;
-        document.getElementById("pago_monto").value = data.total;
-        new bootstrap.Modal(document.getElementById("modalCobrar")).show();
+        });
     });
-}
+    </script>
 
-function historial(id) {
-    fetch("historial_pagos.php?id=" + id)
-    .then(r => r.text())
-    .then(html => {
-        document.getElementById("historialBody").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("modalHistorial")).show();
-    });
-}
-
-function descargarPDF() {
-    const { jsPDF } = window.jspdf;
-    let pdf = new jsPDF('p', 'pt', 'a4');
-    let area = document.getElementById("pdfCorte");
-
-    html2canvas(area).then(canvas => {
-        let img = canvas.toDataURL("image/png");
-        let ancho = pdf.internal.pageSize.getWidth();
-        let alto = canvas.height * ancho / canvas.width;
-
-        pdf.addImage(img, 'PNG', 0, 20, ancho, alto);
-        pdf.save("corte_caja.pdf");
-    });
-}
-</script>
 
 </body>
+
 </html>

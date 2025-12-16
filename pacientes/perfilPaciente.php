@@ -28,18 +28,24 @@ if (!$paciente) {
   el historial del paciente.
 */
 $estudiosQuery = $conexion->prepare("
-    SELECT 
-        oe.id_orden_estudio,
-        o.id_orden,
-        o.fecha_creacion AS fecha_solicitud,
-        oe.estado,
-        oe.cancelado,
-        est.nombre AS nombre_estudio
-    FROM orden_estudios oe
-    JOIN ordenes o ON oe.id_orden = o.id_orden
-    JOIN estudios est ON est.id_estudio = oe.id_estudio
-    WHERE o.id_paciente = ?
-    ORDER BY o.fecha_creacion DESC
+  SELECT 
+    oe.id_orden_estudio,
+    o.id_orden,
+    o.fecha_creacion AS fecha_solicitud,
+    oe.estado,
+    oe.cancelado,
+    est.nombre AS nombre_estudio,
+    r.url_archivo
+FROM orden_estudios oe
+JOIN ordenes o 
+    ON oe.id_orden = o.id_orden
+JOIN estudios est 
+    ON est.id_estudio = oe.id_estudio
+LEFT JOIN resultados r 
+    ON r.id_orden_estudio = oe.id_orden_estudio
+WHERE o.id_paciente = ?
+ORDER BY o.fecha_creacion DESC;
+
 ");
 if (!$estudiosQuery) {
     die("Error en la consulta de estudios: " . $conexion->error);
@@ -57,109 +63,8 @@ $estudiosQuery->close();
 <title>Perfil del Paciente</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="/lab/css/perfilPaciente2.css">
 
-<style>
-
-    body {
-        background: #eef1f5;
-        font-family: "Inter", sans-serif;
-    }
-
-    /* HEADER DEL PERFIL */
-    .profile-header {
-        background: white;
-        padding: 35px 30px;
-        border-radius: 18px;
-        box-shadow: 0 4px 18px rgba(0,0,0,0.07);
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        background: #4e73df;
-        color: white;
-        font-size: 36px;
-        font-weight: bold;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
-    }
-
-    .section-title {
-        margin-top: 45px;
-        margin-bottom: 18px;
-        font-size: 22px;
-        font-weight: 600;
-        color: #333;
-        border-left: 5px solid #4e73df;
-        padding-left: 10px;
-    }
-
-    /* TARJETAS DE DATOS */
-    .data-card {
-        background: white;
-        border-radius: 14px;
-        padding: 18px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.07);
-        font-size: 15px;
-    }
-
-    /* TIMELINE DE ORDENES */
-    .order-card {
-        background: white;
-        border-radius: 16px;
-        padding: 22px 25px;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        border-left: 5px solid #1cc88a;
-    }
-
-    .order-header {
-        font-weight: 600;
-        font-size: 18px;
-        color: #444;
-    }
-
-    .order-date {
-        color: #888;
-        font-size: 14px;
-        margin-top: -2px;
-    }
-
-    /* ESTUDIOS */
-    .study-item {
-        background: #f8f9fc;
-        border-radius: 12px;
-        padding: 14px;
-        margin-top: 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-left: 4px solid #4e73df;
-    }
-
-    /* STATUS */
-    .status-pill {
-        padding: 6px 13px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        color: white;
-    }
-
-    .status-pendiente { background: #f6c23e; }
-    .status-en_proceso { background: #36b9cc; }
-    .status-validado,
-    .status-completo,
-    .status-aprobado { background: #1cc88a; }
-    .status-cancelado { background: #e74a3b; }
-
-</style>
 </head>
 <body>
 
@@ -344,22 +249,23 @@ while ($row = $estudios->fetch_assoc()) {
                         <span class="status-pill status-<?php echo strtolower($est["estado"]); ?>">
                             <?php echo ucfirst($est["estado"]); ?>
                         </span>
+ 
+                <a href="/lab/estudios/interpretacionEstudio.php?id_orden_estudio=<?php echo $est['id_orden_estudio']; ?>" 
+                   class="btn btn-primary btn-sm">
+                    Resultados
+                </a>
+                
+                  <?php if (!empty($est['url_archivo'])): ?>
+    <button class="btn btn-success btn-sm"
+        onclick="descargarResultado(<?= $est['id_orden_estudio'] ?>)">
+        ⬇ Descargar
+    </button>
+<?php else: ?>
+    <button class="btn btn-secondary btn-sm" disabled>
+        ⬇ Descargar
+    </button>
+<?php endif; ?>
 
-                        <!-- BOTÓN DE DESCARGA PDF -->
-                        <?php 
-                            // Aquí se agregará la ruta real en el futuro
-                            $pdf = isset($est["pdf_path"]) ? $est["pdf_path"] : "";
-                        ?>
-
-                        <?php if (!empty($pdf)): ?>
-                            <a href="<?= htmlspecialchars($pdf) ?>" target="_blank" class="btn btn-download">
-                                Descargar
-                            </a>
-                        <?php else: ?>
-                            <button class="btn btn-download disabled" disabled>
-                                PDF
-                            </button>
-                        <?php endif; ?>
 
                     </div>
                 </div>
@@ -374,6 +280,33 @@ while ($row = $estudios->fetch_assoc()) {
 
 
 </div>
+
+<script>
+function descargarResultado(idOrdenEstudio) {
+    fetch('/lab/pacientes/resultados/accionesResultados/descargar_resultado.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'id_orden_estudio=' + idOrdenEstudio
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('No se pudo descargar el archivo');
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'resultado_' + idOrdenEstudio + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(err => alert(err.message));
+}
+</script>
 
 </body>
 </html>

@@ -1,0 +1,19 @@
+body {
+            background: #f4f5f7;
+        }
+        .card-custom {
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .table thead {
+            background: #0d6efd;
+            color: white;
+        }
+        .table tbody tr:hover {
+            background: #e9f2ff;
+        }
+        .btn-custom {
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+        }

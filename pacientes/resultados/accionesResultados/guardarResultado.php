@@ -70,7 +70,7 @@ if (!empty($_FILES['pdf']['name'])) {
     if (move_uploaded_file($_FILES['pdf']['tmp_name'], $rutaFinal)) {
         // Guardamos la ruta relativa correcta para la BD o mostrar en el sistema
         $pdf_path = "resultados/" . $nombreArchivo;
-        $nombreDocumento=$pdf_path;
+        $nombreDocumento=$rutaFinal;
     } else {
         die("Error al subir el archivo. Revisa permisos de la carpeta resultados.");
     }
@@ -102,7 +102,7 @@ $stmt->bind_param(
     $observaciones,
     $interpretacion,
     $id_usuario,
-    $nombreDocumento
+    $nombreArchivo
 );
 
 $stmt->execute();
