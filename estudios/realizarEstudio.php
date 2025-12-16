@@ -160,13 +160,13 @@ $estudios = $queryEstudios->get_result();
             </div>
 
             <div class="mt-3">
-                <a href="/lab/pacientes/resultados/capturarResultados.php?id=<?php echo $e['id_orden_estudio']; ?>" 
+                <a href="/lab/laboratorio/resultados/capturarResultados.php?id=<?php echo $e['id_orden_estudio']; ?>" 
                    class="btn btn-success btn-sm">
                     Realizar estudio
                 </a>
 
                 <!-- Botón futuro para descargar -->
-               <a href="/lab/estudios/interpretacionEstudio.php?id_orden_estudio=<?= $e['id_orden_estudio'] ?>"
+               <a href="/lab/laboratorio/paginas/interpretacionEstudio.php?id_orden_estudio=<?= $e['id_orden_estudio'] ?>"
    class="btn btn-sm btn-outline-primary">
    Ver resultado
 </a>

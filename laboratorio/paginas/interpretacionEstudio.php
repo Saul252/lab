@@ -1,5 +1,12 @@
 <?php
-require "../conexion.php";
+session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit;
+}
+
+require "../../conexion.php";
 
 $id_orden_estudio = intval($_GET['id_orden_estudio'] ?? 0);
 if ($id_orden_estudio <= 0) {

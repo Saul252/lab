@@ -74,6 +74,7 @@ CREATE TABLE estudios (
     id_estudio INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(50) UNIQUE NOT NULL,
     nombre VARCHAR(150) NOT NULL,
+     nombre ENUM('sangre','orina','heces','microbiologia','inmunologia','hormonas','imagen','cardiologia','patologia','genetica','otro') NOT NULL,
     precio DECIMAL(10,2) NOT NULL,
     unidad VARCHAR(50),
     tipo_resultado ENUM('numerico','cualitativo','ambos') DEFAULT 'numerico',

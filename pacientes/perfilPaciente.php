@@ -250,7 +250,7 @@ while ($row = $estudios->fetch_assoc()) {
                             <?php echo ucfirst($est["estado"]); ?>
                         </span>
  
-                <a href="/lab/estudios/interpretacionEstudio.php?id_orden_estudio=<?php echo $est['id_orden_estudio']; ?>" 
+                <a href="/lab/laboratorio/paginas/interpretacionEstudio.php?id_orden_estudio=<?php echo $est['id_orden_estudio']; ?>" 
                    class="btn btn-primary btn-sm">
                     Resultados
                 </a>
@@ -283,7 +283,7 @@ while ($row = $estudios->fetch_assoc()) {
 
 <script>
 function descargarResultado(idOrdenEstudio) {
-    fetch('/lab/pacientes/resultados/accionesResultados/descargar_resultado.php', {
+    fetch('/lab/laboratorio/resultados/accionesResultados/descargar_resultado.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
