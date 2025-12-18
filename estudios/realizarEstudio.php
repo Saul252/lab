@@ -175,7 +175,7 @@ $estudios = $queryEstudios->get_result();
         </div>
 
     <?php endwhile; ?>
-
+<a href="javascript:history.back()" class="btn btn-secondary">⬅ Regresar</a>
 </div>
 
 </body>

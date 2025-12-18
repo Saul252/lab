@@ -486,22 +486,39 @@ foreach ($citasArr as $c) {
   if (e.extendedProps.observ) {
     html += `<br><small>${e.extendedProps.observ}</small>`;
   }
-
-  Swal.fire({
+Swal.fire({
     title: 'Detalle de cita',
     html: html,
+
     input: 'select',
     inputOptions: {
-      programada: 'Programada',
-      completada: 'Completada',
-      cancelada: 'Cancelada'
+        programada: 'Programada',
+        completada: 'Completada',
+        cancelada: 'Cancelada'
     },
     inputValue: e.extendedProps.estado,
+
     showCancelButton: true,
     confirmButtonText: 'Guardar estado',
-    cancelButtonText: 'Cerrar'
-  }).then((res)=>{
+    cancelButtonText: 'Cerrar',
+
+    didOpen: () => {
+        const actions = Swal.getActions();
+        const confirmBtn = Swal.getConfirmButton();
+        const cancelBtn  = Swal.getCancelButton();
+
+        const editarBtn = document.createElement('a');
+        editarBtn.href = `/lab/citas/accionesCitas/editarDetallesCita.php?id_cita=${e.extendedProps.id_cita ?? e.id}`;
+        editarBtn.className = 'btn btn-lg  btn-primary mx-2';
+        editarBtn.textContent = 'Editar cita';
+
+        // INSERTAR ENTRE CONFIRMAR Y CANCELAR
+        actions.insertBefore(editarBtn, cancelBtn);
+    }
+}).then((res) => {
     if (!res.isConfirmed) return;
+    // guardar estado
+
 
     fetch('', {
       method: 'POST',

@@ -65,7 +65,7 @@ session_start();
                 </div>
 
                 <button class="btn btn-success">Guardar Paciente</button>
-                <a href="listar_pacientes.php" class="btn btn-secondary">Cancelar</a>
+                <a href="javascript:history.back()" class="btn btn-secondary">Cancelar</a>
 
             </form>
         </div>

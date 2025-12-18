@@ -106,16 +106,7 @@ $catalogo = $conexion->query("SELECT * FROM estudios ORDER BY nombre ASC");
         <div class="card p-3 mb-3">
             <div class="section-title">Datos de la Orden</div>
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label>Estado</label>
-                    <select class="form-select" name="estado">
-                        <option <?= $orden["estado"]=="pendiente"?"selected":"" ?>>pendiente</option>
-                        <option <?= $orden["estado"]=="pagada"?"selected":"" ?>>pagada</option>
-                        <option <?= $orden["estado"]=="en_proceso"?"selected":"" ?>>en_proceso</option>
-                        <option <?= $orden["estado"]=="completa"?"selected":"" ?>>completa</option>
-                    </select>
-                </div>
+            
 
                 <div class="col-md-3">
                     <label>Folio</label>
@@ -127,7 +118,7 @@ $catalogo = $conexion->query("SELECT * FROM estudios ORDER BY nombre ASC");
                     <input type="text" class="form-control" value="$<?= number_format($orden["total"],2) ?>" disabled>
                 </div>
             </div>
-        </div>
+        
 
         <!-- CITA -->
         <div class="card p-3 mb-3">
