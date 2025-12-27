@@ -190,8 +190,8 @@ sidebar($paginaActual);         // Llama al sidebar
             </div>
         </form>
 
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
+        <div class="table-responsive rounded scroll-tabla">
+            <table class="table table-striped table-hover rounded ">
                 <thead class="table-dark">
                     <tr>
                         <th>Folio</th>

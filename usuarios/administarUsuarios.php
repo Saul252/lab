@@ -8,7 +8,7 @@ require "../conexion.php";
 
 
 $sql_listar = "SELECT * FROM usuarios";
-$result= $conexion->query($sql_listar);
+$result = $conexion->query($sql_listar);
 
 
 ?>
@@ -20,19 +20,20 @@ $result= $conexion->query($sql_listar);
     <meta charset="UTF-8">
     <title>Usuarios</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="/lab/css/style.css">
+    <link rel="stylesheet" href="/lab/css/usuarios/usuarios.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link href="/lab/css/sidebars.css" rel="stylesheet">
 </head>
 
 <body>
-   <?php
-require_once $_SERVER['DOCUMENT_ROOT'] . '/lab/config.php'; // Configuración y rutas
-require_once BASE_PATH . '/sidebar.php';                     // Componente sidebar
+    <?php
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/lab/config.php'; // Configuración y rutas
+    require_once BASE_PATH . '/sidebar.php';                     // Componente sidebar
 
-$paginaActual = 'Usuarios'; // Define la página actual
-sidebar($paginaActual);         // Llama al sidebar
-?>
+    $paginaActual = 'Usuarios'; // Define la página actual
+    sidebar($paginaActual);         // Llama al sidebar
+    ?>
     <div class="container mt-5">
         <h4>Bienvenido, <strong><?php echo $_SESSION['rol']; ?></strong></h4>
 
@@ -41,43 +42,43 @@ sidebar($paginaActual);         // Llama al sidebar
             <a href="registrar.php" class="btn btn-primary">➕ Crear nuevo usuario</a>
         </div>
 
-       <div class="table-responsive scroll-tabla" >
-    <table class="table table-bordered table-hover align-middle">
-        <thead class="table-dark sticky-top">
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Usuario</th>
-                <th>Rol</th>
-                <th style="width: 160px;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($row = $result->fetch_assoc()) { ?>
-            <tr>
-                <td><?= $row['id_usuario']; ?></td>
-                <td><?= $row['nombre']; ?></td>
-                <td><?= $row['usuario']; ?></td>
-                <td><?= $row['rol']; ?></td>
-                <td>
-    <div class="btn-group" role="group">
-        <a href="editar_usuario.php?id=<?= $row['id_usuario']; ?>" class="btn btn-warning btn-sm">
-            ✏ Editar
-        </a>
+        <div class="table-responsive scroll-tabla rounded " style="max-height:60vh; overflow:auto;">
+            <table class="table table-bordered table-hover align-middle rounded">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th style="width: 160px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="rounded">
+                    <?php while ($row = $result->fetch_assoc()) { ?>
+                        <tr>
+                            <td><?= $row['id_usuario']; ?></td>
+                            <td><?= $row['nombre']; ?></td>
+                            <td><?= $row['usuario']; ?></td>
+                            <td><?= $row['rol']; ?></td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="editar_usuario.php?id=<?= $row['id_usuario']; ?>" class="btn btn-warning btn-sm">
+                                        ✏ Editar
+                                    </a>
 
-        <a href="acciones_usuarios/eliminar_usuario.php?id=<?= $row['id_usuario']; ?>"
-           class="btn btn-danger btn-sm"
-           onclick="return confirm('¿Seguro que deseas eliminar este usuario?');">
-            🗑 Eliminar
-        </a>
-    </div>
-</td>
+                                    <a href="acciones_usuarios/eliminar_usuario.php?id=<?= $row['id_usuario']; ?>"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('¿Seguro que deseas eliminar este usuario?');">
+                                        🗑 Eliminar
+                                    </a>
+                                </div>
+                            </td>
 
-            </tr>
-            <?php } ?>
-        </tbody>
-    </table>
-</div>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
 
 
     </div>

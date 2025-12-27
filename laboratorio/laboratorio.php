@@ -28,6 +28,53 @@ $estudios = [];
 while ($row = $res->fetch_assoc()) {
     $estudios[] = $row;
 }
+// ============================
+// PETICIÓN AJAX (solo tabla)
+// ============================
+if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+    foreach ($estudios as $estudio) {
+        ?>
+        <tr>
+            <td><?= $estudio['id_orden'] ?></td>
+            <td><?= htmlspecialchars($estudio['estudio']) ?></td>
+            <td><?= htmlspecialchars($estudio['tipo']) ?></td>
+            <td>
+                <?php
+                switch ($estudio['estado_estudio']) {
+                    case 'pendiente': echo '<span class="badge bg-secondary">Pendiente</span>'; break;
+                    case 'capturado': echo '<span class="badge bg-info text-dark">Capturado</span>'; break;
+                    case 'validado':  echo '<span class="badge bg-success">Validado</span>'; break;
+                    case 'aprobado':  echo '<span class="badge bg-primary">Aprobado</span>'; break;
+                }
+                ?>
+            </td>
+            <td>$<?= number_format($estudio['total'], 2) ?></td>
+            <td class="text-nowrap">
+                <div class="row g-0" style="width:200px">
+                    <div class="col-6 text-center">
+                        <?php if ($estudio['estado_estudio'] == 'pendiente'): ?>
+                            <a class="btn btn-sm btn-success"
+                               href="/lab/laboratorio/resultados/capturarResultados.php?id=<?= $estudio['id_orden_estudio'] ?>">Realizar</a>
+                        <?php else: ?>
+                            <a class="btn btn-sm btn-warning"
+                               href="/lab/laboratorio/paginas/editarResultado.php?id_orden_estudio=<?= $estudio['id_orden_estudio'] ?>">Editar</a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-6 text-center">
+                        <?php if ($estudio['estado_estudio'] == 'pendiente'): ?>
+                            <a class="btn btn-secondary btn-sm disabled">Resultados</a>
+                        <?php else: ?>
+                            <a class="btn btn-primary btn-sm"
+                               href="/lab/laboratorio/paginas/interpretacionEstudio.php?id_orden_estudio=<?= $estudio['id_orden_estudio'] ?>">Resultados</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <?php
+    }
+    exit; // ⛔ MUY IMPORTANTE
+}
 
 ?>
 <?php
@@ -253,6 +300,20 @@ filtroEstado.addEventListener('change', filtrarTabla);
 </script>
 
 
+<script>
+function actualizarTabla() {
+    fetch(window.location.pathname + '?ajax=1')
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('tablaBody').innerHTML = html;
+            filtrarTabla(); // reaplica filtros actuales
+        })
+        .catch(err => console.error('Error al actualizar tabla:', err));
+}
+
+// ⏱️ refresco cada 20 segundos SOLO de la tabla
+setInterval(actualizarTabla, 20000);
+</script>
 
 </body>
 

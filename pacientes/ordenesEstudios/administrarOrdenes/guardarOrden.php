@@ -51,17 +51,17 @@ try {
     if ($crear_cita && $fecha_cita && $hora_cita) {
 
         // Verificar que no exista otra cita en el mismo horario
-        $stmt = $conexion->prepare("
-            SELECT id_cita FROM citas 
-            WHERE fecha_cita = ? AND hora_cita = ?
-        ");
-        $stmt->bind_param("ss", $fecha_cita, $hora_cita);
-        $stmt->execute();
-        $res = $stmt->get_result();
+        // $stmt = $conexion->prepare("
+        //     SELECT id_cita FROM citas 
+        //     WHERE fecha_cita = ? AND hora_cita = ?
+        // ");
+        // $stmt->bind_param("ss", $fecha_cita, $hora_cita);
+        // $stmt->execute();
+        // $res = $stmt->get_result();
 
-        if ($res->num_rows > 0) {
-            throw new Exception("Ya existe una cita programada en ese horario.");
-        }
+        // if ($res->num_rows > 0) {
+        //     throw new Exception("Ya existe una cita programada en ese horario.");
+        // }
 
         // Insertar cita
         $stmt = $conexion->prepare("

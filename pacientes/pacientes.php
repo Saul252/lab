@@ -66,9 +66,9 @@ sidebar($paginaActual);         // Llama al sidebar
         </form>
 
         <!-- TABLA -->
-       <div class="table-responsive scroll-tabla">
+       <div class="table-responsive scroll-tabla rounded " style="max-height:60vh; overflow:auto;">
 
-            <table class="table table-bordered table-hover bg-white">
+            <table class="table table-bordered table-hover bg-white rounded">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
@@ -83,7 +83,7 @@ sidebar($paginaActual);         // Llama al sidebar
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody class="rounded">
                     <?php if ($resultado->num_rows > 0): ?>
                     <?php while ($row = $resultado->fetch_assoc()): ?>
                     <tr>

@@ -103,104 +103,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<title>Editar Resultado</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    .card-header-custom { background-color: #198754; color: white; font-weight: bold; }
-    .badge-resultado { font-size: 0.9rem; padding: 0.5em 0.8em; border-radius: 0.5rem; }
-    .badge-normal { background-color: #198754; color: white; }
-    .badge-alto { background-color: #dc3545; color: white; }
-    .badge-bajo { background-color: #ffc107; color: black; }
-</style>
+    <meta charset="UTF-8">
+    <title>Editar Resultado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-header-custom {
+            background-color: #198754;
+            color: white;
+            font-weight: bold;
+        }
+
+        .badge-resultado {
+            font-size: 0.9rem;
+            padding: 0.5em 0.8em;
+            border-radius: 0.5rem;
+        }
+
+        .badge-normal {
+            background-color: #198754;
+            color: white;
+        }
+
+        .badge-alto {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .badge-bajo {
+            background-color: #ffc107;
+            color: black;
+        }
+    </style>
 </head>
+
 <body>
-<?php include '../sidebar.php'; ?>
+    <?php include '../sidebar.php'; ?>
 
-<div class="container my-4">
-    <h2 class="mb-4">Editar Resultado</h2>
-    <?php if ($mensaje): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($mensaje) ?></div>
-    <?php endif; ?>
+    <div class="container my-4">
+        <h2 class="mb-4">Editar Resultado</h2>
+        <?php if ($mensaje): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($mensaje) ?></div>
+        <?php endif; ?>
 
-    <div class="row g-4">
+        <div class="row g-4">
 
-        <!-- TARJETA PACIENTE -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header card-header-custom">Paciente</div>
-                <div class="card-body">
-                    <p><strong>Nombre:</strong> <?= htmlspecialchars($data['paciente']) ?></p>
-                    <p><strong>Edad:</strong> <?= $data['edad'] ?> años</p>
-                    <p><strong>Sexo:</strong> <?= $data['sexo'] ?></p>
-                    <p><strong>Folio:</strong> <?= $data['folio'] ?></p>
-                    <p><strong>Fecha creación:</strong> <?= date('d/m/Y', strtotime($data['fecha_creacion'])) ?></p>
+            <!-- TARJETA PACIENTE -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">Paciente</div>
+                    <div class="card-body">
+                        <p><strong>Nombre:</strong> <?= htmlspecialchars($data['paciente']) ?></p>
+                        <p><strong>Edad:</strong> <?= $data['edad'] ?> años</p>
+                        <p><strong>Sexo:</strong> <?= $data['sexo'] ?></p>
+                        <p><strong>Folio:</strong> <?= $data['folio'] ?></p>
+                        <p><strong>Fecha creación:</strong> <?= date('d/m/Y', strtotime($data['fecha_creacion'])) ?></p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- TARJETA ESTUDIO -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header card-header-custom">Estudio</div>
-                <div class="card-body">
-                    <p><strong>Nombre:</strong> <?= htmlspecialchars($data['estudio']) ?></p>
-                    <p><strong>Unidad:</strong> <?= htmlspecialchars($data['unidad_resultado'] ?: $data['unidad']) ?></p>
-                    <p><strong>Estado:</strong> <?= htmlspecialchars($data['estado']) ?></p>
+            <!-- TARJETA ESTUDIO -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">Estudio</div>
+                    <div class="card-body">
+                        <p><strong>Nombre:</strong> <?= htmlspecialchars($data['estudio']) ?></p>
+                        <p><strong>Unidad:</strong> <?= htmlspecialchars($data['unidad_resultado'] ?: $data['unidad']) ?></p>
+                        <p><strong>Estado:</strong> <?= htmlspecialchars($data['estado']) ?></p>
+                    </div>
                 </div>
             </div>
+
         </div>
+
+        <form method="POST" enctype="multipart/form-data" class="mt-4">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">Valor Numérico</label>
+                    <input type="number" step="0.01" name="valor_numerico" class="form-control" value="<?= htmlspecialchars($data['valor_numerico']) ?>">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Valor Cualitativo</label>
+                    <input type="text" name="valor_cualitativo" class="form-control" value="<?= htmlspecialchars($data['valor_cualitativo']) ?>">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Unidad</label>
+                    <input type="text" name="unidad" class="form-control" value="<?= htmlspecialchars($data['unidad_resultado']) ?>">
+                </div>
+
+            </div>
+
+            <div class="mb-3 mt-3">
+                <label class="form-label">Observaciones</label>
+                <textarea name="observaciones" class="form-control"><?= htmlspecialchars($data['observaciones']) ?></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Interpretación</label>
+                <textarea name="interpretacion" class="form-control"><?= htmlspecialchars($data['interpretacion']) ?></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Archivo PDF</label>
+                <?php if ($data['url_archivo'] && file_exists(__DIR__ . "/../../../pacientes/resultados-laboratorio/" . basename($data['url_archivo']))): ?>
+                    <div class="mb-2">
+                        <a href="/lab/pacientes/resultados-laboratorio/<?= basename($data['url_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm">Ver PDF actual</a>
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="pdf" class="form-control" accept="application/pdf">
+            </div>
+
+            <button type="submit" class="btn btn-success">Actualizar Resultado</button>
+            <button onclick="history.back()" class="btn btn-danger ">
+                ← Regresar
+            </button>
+        </form>
 
     </div>
 
-    <form method="POST" enctype="multipart/form-data" class="mt-4">
-
-        <div class="row g-3">
-
-            <div class="col-md-4">
-                <label class="form-label">Valor Numérico</label>
-                <input type="number" step="0.01" name="valor_numerico" class="form-control" value="<?= htmlspecialchars($data['valor_numerico']) ?>">
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Valor Cualitativo</label>
-                <input type="text" name="valor_cualitativo" class="form-control" value="<?= htmlspecialchars($data['valor_cualitativo']) ?>">
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Unidad</label>
-                <input type="text" name="unidad" class="form-control" value="<?= htmlspecialchars($data['unidad_resultado']) ?>">
-            </div>
-
-        </div>
-
-        <div class="mb-3 mt-3">
-            <label class="form-label">Observaciones</label>
-            <textarea name="observaciones" class="form-control"><?= htmlspecialchars($data['observaciones']) ?></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Interpretación</label>
-            <textarea name="interpretacion" class="form-control"><?= htmlspecialchars($data['interpretacion']) ?></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Archivo PDF</label>
-            <?php if ($data['url_archivo'] && file_exists(__DIR__ . "/../../../pacientes/resultados-laboratorio/" . basename($data['url_archivo']))): ?>
-                <div class="mb-2">
-                    <a href="/lab/pacientes/resultados-laboratorio/<?= basename($data['url_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm">Ver PDF actual</a>
-                </div>
-            <?php endif; ?>
-            <input type="file" name="pdf" class="form-control" accept="application/pdf">
-        </div>
-
-        <button type="submit" class="btn btn-success">Actualizar Resultado</button>
-        <a href="/lab/laboratorio/resultados/accionesResultados/actualizarResultados.php?id_orden_estudio=<?= $data['id_orden_estudio'] ?>" class="btn btn-secondary">Volver</a>
-    </form>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

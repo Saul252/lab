@@ -125,7 +125,7 @@ sidebar($paginaActual);         // Llama al sidebar
         </div>
 
         <div class="col-md-3">
-            <a href="/lab/almacen/reactivos.php" class="text-decoration-none">
+            <a href="/lab/almacen/almacen.php" class="text-decoration-none">
                 <div class="card card-custom p-3 text-center bg-white">
                     <i class="bi bi-box-seam fs-1 text-danger"></i>
                     <h4 class="mt-2 mb-0"><?= $insumos_en_cero ?></h4>
